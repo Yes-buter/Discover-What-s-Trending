@@ -1,10 +1,15 @@
 # Hots - Tech Trend Tracker 🔥
 
-Hots is a modern full-stack web application designed to help developers stay updated with the latest technology trends. It aggregates trending GitHub projects, Computer Vision papers from ArXiv, and top stories from Hacker News into a single, clean interface.
-
+[![Live Demo](https://img.shields.io/badge/demo-online-green.svg)](https://trael8mykr1f.vercel.app/)
 ![Tech Stack](https://img.shields.io/badge/Frontend-React%20%2B%20TypeScript-blue)
 ![Tech Stack](https://img.shields.io/badge/Backend-FastAPI-green)
 ![Tech Stack](https://img.shields.io/badge/Database-Supabase-orange)
+
+> **🌟 Live Demo:** [https://trael8mykr1f.vercel.app/](https://trael8mykr1f.vercel.app/)
+> 
+> *Note: The demo is hosted on Vercel. Feel free to register a test account (username/password only) to experience the full features including favorites.*
+
+Hots is a modern full-stack web application designed to help developers stay updated with the latest technology trends. It aggregates trending GitHub projects, Computer Vision papers from ArXiv, and top stories from Hacker News into a single, clean interface.
 
 ## ✨ Features
 

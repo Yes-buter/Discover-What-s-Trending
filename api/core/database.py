@@ -4,7 +4,8 @@ import os
 
 # Fix for SSL/Connection errors in some network environments (e.g. China)
 # Try to detect and use common local proxy ports if no proxy is set
-if not os.environ.get("HTTP_PROXY") and not os.environ.get("HTTPS_PROXY"):
+# ONLY apply this fix in local development environment, NOT in production (Vercel/Render)
+if os.environ.get("VERCEL") != "1" and os.environ.get("RENDER") != "true" and not os.environ.get("HTTP_PROXY") and not os.environ.get("HTTPS_PROXY"):
     # Common proxy ports: 7890 (Clash), 10809 (v2ray)
     # We found 7890 works in this environment
     proxy_url = "http://127.0.0.1:7890"
