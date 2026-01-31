@@ -1,0 +1,13 @@
+fastapi
+uvicorn
+supabase
+python-dotenv
+httpx
+beautifulsoup4
+feedparser
+pydantic
+pydantic-settings
+email-validator
+python-multipart
+celery
+redis
