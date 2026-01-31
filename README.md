@@ -143,4 +143,189 @@ curl -X POST http://localhost:8000/api/admin/crawl
 
 ## 📄 License
 
-This project is licensed under the MIT License.
+
+# Hots - 技术趋势追踪器 🔥
+
+> **🌟 在线演示：** [https://trael8mykr1f.vercel.app/](https://trael8mykr1f.vercel.app/)
+> *注：演示版托管于 Vercel。欢迎注册测试账号（仅需用户名/密码）以体验包括“收藏夹”在内的全部功能。*
+
+Hots 是一个现代化的全栈 Web 应用，旨在帮助开发者紧跟最新的技术趋势。它将 **GitHub 热门项目**、**ArXiv 计算机视觉论文**以及 **Hacker News 头条新闻**整合到一个简洁的界面中。
+
+## ✨ 功能特性
+
+* **GitHub Trending**：实时抓取 GitHub 趋势榜，发现各种编程语言下最热门的仓库。
+* **学术论文**：每日更新来自 ArXiv 的最新计算机视觉 (CV) 领域论文。
+* **技术新闻**：获取 Hacker News 的热门文章。
+* **用户系统**：
+* 简化的**用户名/密码**认证（无需邮箱）。
+* 用户个人资料页。
+
+
+* **收藏夹**：将你感兴趣的项目和论文保存到个人收藏中。
+* **响应式设计**：基于 Tailwind CSS 构建，提供良好的移动端适配体验。
+
+## 🛠️ 技术栈
+
+### 前端
+
+* **框架**：React 18 + TypeScript
+* **构建工具**：Vite
+* **样式**：Tailwind CSS
+* **图标**：Lucide React
+* **路由**：React Router DOM
+
+### 后端
+
+* **框架**：FastAPI (Python 3.10+)
+* **数据库客户端**：Supabase Python Client
+* **爬虫相关**：
+* `httpx` (异步 HTTP 客户端)
+* `BeautifulSoup4` (HTML 解析)
+* `feedparser` (RSS/Atom 解析)
+
+
+* **校验**：Pydantic
+
+### 数据库 & 认证
+
+* **供应商**：Supabase (PostgreSQL)
+* **身份认证**：Supabase Auth（经过自定义，支持仅用户名登录）
+* **存储**：Postgres 表，并启用行级安全策略 (RLS)
+
+## 🚀 快速上手
+
+### 前置条件
+
+* Node.js 18+
+* Python 3.10+
+* 一个 Supabase 账号
+
+### 1. 克隆仓库
+
+```bash
+git clone https://github.com/yourusername/hots.git
+cd hots
+
+```
+
+### 2. Supabase 配置
+
+1. 在 [Supabase](https://supabase.com) 上创建一个新项目。
+2. 前往 **Project Settings -> API**，复制你的 `Project URL` 和 `anon public key`。
+3. 前往 **Authentication -> Providers -> Email**：
+* **启用 (Enable)** "Enable Email provider"。
+* **禁用 (Disable)** "Confirm email"。
+
+
+4. 在 Supabase 的 SQL Editor 中运行以下迁移脚本（位于 `supabase/migrations/` 目录下）以建立数据库结构：
+* `20240131000000_init_schema.sql`
+* `20240131000001_add_user_trigger.sql`（可选，逻辑已移至后端）
+* `20240131000002_remove_email_column.sql`
+* `20240131000003_change_favorites_item_id_type.sql`
+
+
+
+### 3. 后端设置
+
+1. 进入 `api` 目录：
+```bash
+cd api
+
+```
+
+
+2. 创建虚拟环境并激活：
+```bash
+python -m venv venv
+# Windows
+.\venv\Scripts\activate
+# Mac/Linux
+source venv/bin/activate
+
+```
+
+
+3. 安装依赖：
+```bash
+pip install -r requirements.txt
+
+```
+
+
+4. 在 `api` 目录（或根目录）创建 `.env` 文件，填入你的 Supabase 凭据：
+```env
+SUPABASE_URL=你的_supabase_url
+SUPABASE_KEY=你的_supabase_service_role_key
+
+```
+
+
+*注：为了让后端绕过邮箱限制并创建用户，这里**必须**使用 `service_role_key`，而不是 anon key。*
+5. 启动服务器：
+```bash
+uvicorn main:app --reload
+# 或者
+python -m uvicorn main:app --port 8000
+
+```
+
+
+
+### 4. 前端设置
+
+1. 返回根目录（`package.json` 所在目录）：
+```bash
+cd ..
+
+```
+
+
+2. 安装依赖：
+```bash
+npm install
+
+```
+
+
+3. 启动开发服务器：
+```bash
+npm run dev
+
+```
+
+
+4. 在浏览器中打开 [http://localhost:5173](https://www.google.com/search?q=http://localhost:5173)。
+
+## 🕷️ 爬虫说明
+
+后端内置了爬虫程序。如需手动触发抓取，可以运行：
+
+```bash
+# Powershell
+Invoke-WebRequest -Method POST -Uri http://localhost:8000/api/admin/crawl
+# Curl
+curl -X POST http://localhost:8000/api/admin/crawl
+
+```
+
+## 📦 部署
+
+### 前端 (Vercel/Netlify)
+
+1. 将代码推送到 GitHub。
+2. 在 Vercel 中导入项目。
+3. 设置构建命令 (Build Command) 为 `npm run build`。
+4. 设置输出目录 (Output Directory) 为 `dist`。
+
+### 后端 (Render/Railway)
+
+1. 将代码推送到 GitHub。
+2. 在 Render/Railway 上创建新的 Web Service。
+3. 设置根目录 (Root Directory) 为 `api`。
+4. 设置构建命令为 `pip install -r requirements.txt`。
+5. 设置启动命令为 `uvicorn main:app --host 0.0.0.0 --port $PORT`。
+6. 在环境变量中添加 `SUPABASE_URL` 和 `SUPABASE_KEY`。
+
+## 📄 开源协议
+
+本项目基于 MIT 协议进行许可。
