@@ -86,3 +86,9 @@ export const removeFavorite = async (itemType: 'project' | 'paper', itemId: stri
   const response = await api.delete(`/user/favorites/${itemType}/${itemId}`);
   return response.data;
 };
+
+// Admin API
+export const triggerCrawl = async () => {
+  const response = await api.post('/admin/crawl');
+  return response.data;
+};

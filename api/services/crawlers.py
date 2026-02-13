@@ -164,12 +164,20 @@ class HackerNewsCrawler(BaseCrawler):
             else:
                 category_id = cats.data[0]['id']
             
-            # Fetch details for each story
-            # This could be optimized with asyncio.gather
+            # Fetch details concurrently
+            tasks = []
             for sid in story_ids:
+                item_url = f"https://hacker-news.firebaseio.com/v0/item/{sid}.json"
+                tasks.append(self.fetch(item_url))
+            
+            responses = await asyncio.gather(*tasks, return_exceptions=True)
+
+            for i, item_resp in enumerate(responses):
+                if isinstance(item_resp, Exception):
+                    print(f"Error fetching HN item {story_ids[i]}: {item_resp}")
+                    continue
+
                 try:
-                    item_url = f"https://hacker-news.firebaseio.com/v0/item/{sid}.json"
-                    item_resp = await self.fetch(item_url)
                     item = item_resp.json()
                     
                     if not item or item.get('type') != 'story':
@@ -179,14 +187,14 @@ class HackerNewsCrawler(BaseCrawler):
                         "title": item.get('title'),
                         "abstract": f"Score: {item.get('score', 0)} | Comments: {item.get('descendants', 0)}",
                         "authors": [item.get('by', 'unknown')],
-                        "pdf_url": item.get('url', f"https://news.ycombinator.com/item?id={sid}"), 
+                        "pdf_url": item.get('url', f"https://news.ycombinator.com/item?id={story_ids[i]}"), 
                         "published_date": datetime.fromtimestamp(item.get('time')).date().isoformat(),
                         "source": "hackernews", 
                         "category_id": category_id
                     }
                     papers.append(paper)
                 except Exception as e:
-                    print(f"Error parsing HN story {sid}: {e}")
+                    print(f"Error parsing HN story {story_ids[i]}: {e}")
                     continue
             
             return papers
@@ -204,8 +212,32 @@ class CrawlerService:
     async def crawl_all(self):
         print("Starting full crawl...")
         
+        # Run all crawlers concurrently
+        # GitHub and ArXiv are independent. HN is independent.
+        # We can gather them.
+        
+        results = await asyncio.gather(
+            self.github.get_trending(),
+            self.arxiv.get_cv_papers(),
+            self.hn.get_top_stories(),
+            return_exceptions=True
+        )
+        
+        projects = results[0] if not isinstance(results[0], Exception) else []
+        if isinstance(results[0], Exception):
+            print(f"GitHub crawler failed: {results[0]}")
+
+        papers = results[1] if not isinstance(results[1], Exception) else []
+        if isinstance(results[1], Exception):
+            print(f"ArXiv crawler failed: {results[1]}")
+
+        hn_items = results[2] if not isinstance(results[2], Exception) else []
+        if isinstance(results[2], Exception):
+            print(f"HN crawler failed: {results[2]}")
+
+        # Save results (sequentially to avoid DB locks/issues, or could be parallel too but let's be safe)
+        
         # 1. GitHub
-        projects = await self.github.get_trending()
         for p in projects:
             try:
                 supabase.table("github_projects").upsert(p, on_conflict="repo_id").execute()
@@ -214,7 +246,6 @@ class CrawlerService:
         print(f"Saved {len(projects)} GitHub projects.")
 
         # 2. ArXiv
-        papers = await self.arxiv.get_cv_papers()
         for p in papers:
             try:
                 supabase.table("papers").insert(p).execute()
@@ -224,7 +255,6 @@ class CrawlerService:
         print(f"Saved {len(papers)} ArXiv papers.")
         
         # 3. Hacker News
-        hn_items = await self.hn.get_top_stories()
         for n in hn_items:
             try:
                 supabase.table("papers").insert(n).execute()

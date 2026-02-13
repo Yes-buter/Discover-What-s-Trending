@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { FileText, Download, Code, Calendar, Heart } from 'lucide-react';
-import { getLatestPapers, getCategories, addFavorite, removeFavorite, getFavorites } from '../services/api';
+import { FileText, Download, Code, Calendar, Heart, RefreshCcw } from 'lucide-react';
+import { getLatestPapers, getCategories, addFavorite, removeFavorite, getFavorites, triggerCrawl } from '../services/api';
 import { Paper, Category, Favorite } from '../types';
 import { useAuth } from '../context/AuthContext';
 
@@ -9,6 +9,7 @@ const CVPapers = () => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [favorites, setFavorites] = useState<Favorite[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   const { user } = useAuth();
 
@@ -44,6 +45,19 @@ const CVPapers = () => {
       console.error('Error fetching papers:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    try {
+      await triggerCrawl();
+      await new Promise(resolve => setTimeout(resolve, 3000));
+      await fetchPapers();
+    } catch (error) {
+      console.error('Error refreshing data:', error);
+    } finally {
+      setRefreshing(false);
     }
   };
 
@@ -164,8 +178,16 @@ const CVPapers = () => {
             );
           })}
           {papers.length === 0 && (
-            <div className="text-center py-12 text-gray-500">
-              No papers found for the selected criteria.
+            <div className="flex flex-col items-center justify-center py-12 text-gray-500">
+              <p className="mb-4">No papers found for the selected criteria.</p>
+              <button
+                onClick={handleRefresh}
+                disabled={refreshing}
+                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
+              >
+                <RefreshCcw className={`w-4 h-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
+                {refreshing ? 'Refreshing...' : 'Refresh Data'}
+              </button>
             </div>
           )}
         </div>

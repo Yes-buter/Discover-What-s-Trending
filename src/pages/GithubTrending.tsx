@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Star, GitFork, ExternalLink, Heart } from 'lucide-react';
-import { getTrendingProjects, addFavorite, removeFavorite, getFavorites } from '../services/api';
+import { Star, GitFork, ExternalLink, Heart, RefreshCcw } from 'lucide-react';
+import { getTrendingProjects, addFavorite, removeFavorite, getFavorites, triggerCrawl } from '../services/api';
 import { GithubProject, Favorite } from '../types';
 import { useAuth } from '../context/AuthContext';
 
@@ -8,6 +8,7 @@ const GithubTrending = () => {
   const [projects, setProjects] = useState<GithubProject[]>([]);
   const [favorites, setFavorites] = useState<Favorite[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [language, setLanguage] = useState<string>('');
   const { user } = useAuth();
 
@@ -30,6 +31,25 @@ const GithubTrending = () => {
       console.error('Error fetching projects:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    try {
+      await triggerCrawl();
+      // Wait a bit for DB to populate if needed, but triggerCrawl (POST) is async background.
+      // Wait, POST is async background. So it returns immediately.
+      // We should probably wait a few seconds or poll?
+      // Or just tell user "Refresh started, please wait..."
+      // But if I want to show results, I need to poll.
+      // For now, let's just wait 2 seconds then refetch.
+      await new Promise(resolve => setTimeout(resolve, 3000));
+      await fetchProjects();
+    } catch (error) {
+      console.error('Error refreshing data:', error);
+    } finally {
+      setRefreshing(false);
     }
   };
 
@@ -138,8 +158,16 @@ const GithubTrending = () => {
             );
           })}
           {projects.length === 0 && (
-            <div className="col-span-full text-center py-12 text-gray-500">
-              No projects found.
+            <div className="col-span-full flex flex-col items-center justify-center py-12 text-gray-500">
+              <p className="mb-4">No projects found.</p>
+              <button
+                onClick={handleRefresh}
+                disabled={refreshing}
+                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
+              >
+                <RefreshCcw className={`w-4 h-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
+                {refreshing ? 'Refreshing...' : 'Refresh Data'}
+              </button>
             </div>
           )}
         </div>
